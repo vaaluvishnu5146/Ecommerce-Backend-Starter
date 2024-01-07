@@ -1,7 +1,9 @@
 const AuthModel = require("../Models/Auth.model");
-const AuthRouter = require("express").Router();
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const AuthRouter = require("express").Router();
 const saltRounds = 10;
+const secret = "ECOM_API_SECRET";
 
 /**
  * METHOD - POST
@@ -50,8 +52,6 @@ AuthRouter.post("/create", (req, res, next) => {
  * Helps to signin user
  */
 AuthRouter.post("/signin", async (req, res, next) => {
-  // console.log(req.body);
-
   /**
    * Get the data from request object
    * Check whether given email or phone number is available in the database
@@ -80,9 +80,14 @@ AuthRouter.post("/signin", async (req, res, next) => {
     if (response && response._id) {
       bcrypt.compare(password, response.password).then(function (result) {
         if (result) {
+          const token = jwt.sign({ role: ["customer"] }, secret, {
+            expiresIn: 60 * 5,
+          });
+          // GENERATE JWT TOKEN AND SEND IT IN RESPONSE BODY
           res.status(200).json({
             success: true,
             message: "Account sign in successful",
+            token: token,
           });
         } else {
           res.status(401).json({
